@@ -1,5 +1,7 @@
 # fdroidclient-apk-next
-🇨🇳 简体中文[](README.zh-CN.md)
+
+🇺🇸 **English (US)** ｜ 🇨🇳 [简体中文](README.zh-CN.md)
+
 F-Droid stopped publishing client APKs on GitHub. This repo keeps the door open.
 
 I'm a middle school student in China, and I want to say this honestly: my technical skills are still limited. I can't patch F-Droid's code, I can't add features, and there are plenty of things in this world of free software that are way above my head. But I've fallen in love with what open source stands for — the idea that software can be free, transparent, and built by strangers helping strangers, just because it's the right thing to do. That idea made me want to give something back, in whatever small way I could.
