@@ -10,10 +10,11 @@ Here's the part I can play: F-Droid's home is on GitLab, and they no longer publ
 
 ## What's in every release
 
-Every time a new official client drops, I upload **two files, every single time:**
+Every time a new official client drops, I upload **two core files, every single time** — plus one official key, kept alongside them for deeper verification:
 
 - `F-Droid_<version>.apk` — the official client, untouched
 - `F-Droid_<version>.apk.sha256.txt` — a plain text file with the **file hash** of that exact APK
+- `f-droid.org-signing-key.gpg` — the official GPG public key, for advanced release-chain checks (see below)
 
 That `.sha256.txt` is just a text file. Open it on any phone and you'll see one line: the SHA-256 of this build. I keep it as `.txt` on purpose — no fancy no-extension tricks, so it opens on any device and beginners can actually read it.
 
@@ -26,32 +27,79 @@ That `.sha256.txt` is just a text file. Open it on any phone and you'll see one 
 - To prove it's really F-Droid's official package, you check the certificate separately (see the next section).
 
 Quick check on most computers:
-`sha256sum -c F-Droid_*.apk.sha256.txt`
+
+```sh
+sha256sum -c F-Droid_*.apk.sha256.txt
+```
 
 No `sha256sum` on your phone? Just open the `.txt` and compare the hash inside it with what's shown on this releases page. If they match, the download is intact.
 
 ## Verify the signature too (don't skip this)
 
-| | File hash (the `.txt`) | Certificate fingerprint |
-|---|---|---|
-| What it proves | Download is intact | Package is really from F-Droid |
-| Changes? | **Every version** | **Never** (until 2037) |
-| How to check | `sha256sum -c` or by eye | `keytool -printcert -jarfile` |
+There are three layers here. For everyday installs, the first two are all you need. The third is the "paranoid's back pocket."
 
-The certificate fingerprint to look for is **always** this one:
+| | File hash (the `.txt`) | Certificate fingerprint (the one that matters) | GPG public key (advanced) |
+|---|---|---|---|
+| What it proves | Download is intact | Package is really from F-Droid | Release chain wasn't tampered with |
+| Changes? | **Every version** | **Never** (valid until 2037) | Key fingerprint stays the same (valid until 2037) |
+| How to check | `sha256sum -c` or by eye | `keytool -printcert -jarfile` | `gpg --verify` (needs the `.asc` file) |
 
-    43238d512c1e5eb2d6569f4a3afbf5523418b82e0a3ed1552770abb9a9c9ccab
+The certificate fingerprint to look for is **always** this one — this is what Android checks on install and update:
+
+```
+43238d512c1e5eb2d6569f4a3afbf5523418b82e0a3ed1552770abb9a9c9ccab
+```
 
 (F-Droid documents this as their long-lived signing certificate, valid until 2037.)
 
 - **Different APK hash?** Normal. Every release has its own.
 - **Different certificate?** Stop. **Do not install**, no matter what the filename or file hash says.
+- On Linux/macOS:
 
-On Linux/macOS: `keytool -printcert -jarfile F-Droid_*.apk` should print that same certificate value. Android itself will also refuse any future update whose signature doesn't match, so getting the very first install right keeps every later update safe.
+  ```sh
+  keytool -printcert -jarfile F-Droid_*.apk
+  ```
+
+  should print that same certificate value. Android itself will also refuse any future update whose signature doesn't match, so getting the very first install right keeps every later update safe.
+
+### Advanced: GPG release signature (optional, but worth knowing about)
+
+The `f-droid.org-signing-key.gpg` shipped in this repo is the official public key. It is **a different key from the Android signing certificate** above — don't mix them up:
+
+- **Android certificate** (middle column above): what Android checks when installing. It stops impersonation. Before 2037, its fingerprint is always `43238d…ccab`.
+- **GPG public key** (this section): for verifying things on a computer. It checks the official `.asc` signature file and proves the package came out of F-Droid's own release chain.
+
+**How to use the `.gpg` file:**
+
+1. Import the key once:
+
+   ```sh
+   gpg --import f-droid.org-signing-key.gpg
+   ```
+
+   The official primary key fingerprint is:
+
+   ```
+   37D2 C987 89D8 3119 4839  4E3E 41E7 044E 1DBA 2E89
+   ```
+
+   Compare it when you import. Same fingerprint = same key, just renewed.
+
+2. Verify the release signature (you need the official `.asc` file that sits next to the APK):
+
+   ```sh
+   gpg --verify F-Droid_<version>.apk.asc F-Droid_<version>.apk
+   ```
+
+   `Good signature from "F-Droid ..."` means the release chain is intact.
+
+**⏳ Heads-up about the 2037 expiry:**
+
+This GPG key is valid until **2037**. After that, verification may print `key expired`. That's **normal expiry, not tampering** — the official team renews the key, and an unchanged fingerprint means it's still the same key. For everyday phone installs, the **Android certificate fingerprint** above plus a matching `.sha256.txt` is all you need. GPG is the back pocket, and the key is already here whenever you want it.
 
 ## I'll keep this going
 
-This isn't a one-time upload. I'm going to maintain it for as long as I can, through flaky networks and busy school days. I can't promise I'll always be fast, but I can promise I'll keep showing up. New official version out? I'll be here with the APK and its `.sha256.txt`, same two files, same rules.
+This isn't a one-time upload. I'm going to maintain it for as long as I can, through flaky networks and busy school days. I can't promise I'll always be fast, but I can promise I'll keep showing up. New official version out? I'll be here with the APK, its `.sha256.txt`, and that `.gpg` key — same files, same rules.
 
 ## One honest note
 
